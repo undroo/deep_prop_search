@@ -4,6 +4,7 @@ from scraper import DomainScraper
 from agent import PropertyAgent
 from dotenv import load_dotenv
 from datetime import datetime
+from map import DistanceCalculator
 
 def main():
     # Set up argument parser
@@ -15,20 +16,28 @@ def main():
     parser.add_argument('--debug', action='store_true', help='Show debug information')
     args = parser.parse_args()
     
-    # Initialize scraper
+    # Load environment variables
+    load_dotenv(dotenv_path="config/.env")
+    
+    # Get API keys
+    gemini_api_key = os.getenv('GEMINI_API_KEY')
+    maps_api_key = os.getenv('GOOGLE_MAP_API_KEY')
+    
+    if not gemini_api_key:
+        raise ValueError("Please set the GEMINI_API_KEY environment variable in config/.env")
+    
+    if not maps_api_key:
+        raise ValueError("Please set the GOOGLE_MAP_API_KEY environment variable in config/.env")
+    
+    # Initialize components
     print("Initializing scraper...")
     scraper = DomainScraper()
     
-    # Get API key from environment
-    print("Loading environment variables...")
-    load_dotenv(dotenv_path="config/.env")
-    api_key = os.getenv('GOOGLE_API_KEY')
-    if not api_key:
-        raise ValueError("Please set the GOOGLE_API_KEY environment variable in config/.env")
-    
-    # Initialize agent
     print("Initializing Gemini agent...")
-    agent = PropertyAgent(api_key)
+    agent = PropertyAgent(gemini_api_key)
+    
+    print("Initializing distance calculator...")
+    distance_calculator = DistanceCalculator(maps_api_key)
     
     try:
         # Scrape property data
@@ -49,10 +58,36 @@ def main():
                 else:
                     print(f"  {value}")
         
+        # Calculate distances
+        print("\nCalculating distances to key locations...")
+        address = property_data.get('address', {}).get('full_address')
+        distance_info = None
+        if address:
+            distance_info = distance_calculator.calculate_distances(address)
+            if args.debug:
+                print("\nDebug: Distance Information:")
+                for category, locations in distance_info.items():
+                    print(f"\n{category.upper()} LOCATIONS:")
+                    for location in locations:
+                        print(f"\n{location['destination']}")
+                        print(f"Distance: {location['distance']['text']}")
+                        print("Travel Times:")
+                        for mode, times in location["modes"].items():
+                            print(f"  {mode.title()}:")
+                            for time_type, time_info in times.items():
+                                if time_info:
+                                    print(f"    {time_type}: {time_info['text']}")
+        else:
+            print("Warning: Could not calculate distances - No address found")
+        
         # Save raw data if requested
         if args.save:
             print("\nSaving raw data...")
-            scraper.save_results(property_data, args.output)
+            raw_data = {
+                "property_data": property_data,
+                "distance_info": distance_info
+            }
+            scraper.save_results(raw_data, args.output)
         
         # Analyze property
         print("\nAnalyzing property...")
@@ -71,13 +106,15 @@ def main():
                     analysis_result = {
                         "timestamp": datetime.now().isoformat(),
                         "property_url": property_data.get("basic_info", {}).get("url", "Unknown URL"),
-                        "summary": summary
+                        "summary": summary,
+                        "property_data": property_data,
+                        "distance_info": distance_info
                     }
                     agent.save_analysis(analysis_result, f"{args.output}_quick")
         else:
             # Get full analysis
             print("Generating detailed analysis...")
-            analysis = agent.analyze_property(property_data)
+            analysis = agent.analyze_property(property_data, distance_info)
             
             if "error" in analysis:
                 print(f"\nError during analysis: {analysis['error']}")
@@ -87,6 +124,8 @@ def main():
                 
                 # Save analysis if requested
                 if args.save:
+                    analysis["property_data"] = property_data
+                    analysis["distance_info"] = distance_info
                     agent.save_analysis(analysis, args.output)
             
     except Exception as e:

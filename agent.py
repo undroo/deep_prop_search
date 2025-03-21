@@ -7,10 +7,10 @@ import json
 class PropertyAgent:
     def __init__(self, api_key: str):
         """
-        Initialize the PropertyAgent with Gemini API.
+        Initialize the property agent with Gemini API.
         
         Args:
-            api_key: Google API key for Gemini
+            api_key: Gemini API key (GEMINI_API_KEY)
         """
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-1.5-flash')
@@ -39,12 +39,13 @@ class PropertyAgent:
             print(f"Error validating property data: {e}")
             return False
         
-    def analyze_property(self, property_data: Dict) -> Dict:
+    def analyze_property(self, property_data: Dict, distance_info: Optional[Dict] = None) -> Dict:
         """
         Analyze property data using Gemini AI and provide insights.
         
         Args:
             property_data: Dictionary containing property details
+            distance_info: Optional dictionary containing distance calculations
             
         Returns:
             Dictionary containing analysis results
@@ -61,7 +62,7 @@ class PropertyAgent:
             self._print_basic_info(property_data)
             
             # Create a structured prompt for Gemini
-            prompt = self._create_analysis_prompt(property_data)
+            prompt = self._create_analysis_prompt(property_data, distance_info)
             print("Generated analysis prompt successfully")
             
             # Get analysis from Gemini
@@ -124,7 +125,7 @@ class PropertyAgent:
         
         print("================\n")
     
-    def _create_analysis_prompt(self, property_data: Dict) -> str:
+    def _create_analysis_prompt(self, property_data: Dict, distance_info: Optional[Dict] = None) -> str:
         """Create a detailed prompt for Gemini based on property data."""
         try:
             # Format price with safe access
@@ -136,6 +137,7 @@ class PropertyAgent:
             property_size = f"{features.get('property_size')} m²" if features.get('property_size') else 'Not specified'
             land_size = f"{features.get('land_size')} m²" if features.get('land_size') else 'Not specified'
             
+            # Base prompt
             prompt = f"""As a real estate expert, analyze this property and provide detailed insights:
 
 Property Details:
@@ -152,16 +154,69 @@ Features:
 - Land Size: {land_size}
 
 Description:
-{property_data.get('description', 'No description available')}
+{property_data.get('description', 'No description available')}"""
+
+            # Add distance information if available
+            if distance_info:
+                prompt += "\n\n" + "="*50 + "\nLOCATION ANALYSIS\n" + "="*50 + "\n"
+                
+                for category, locations in distance_info.items():
+                    if not locations:
+                        continue
+                        
+                    prompt += f"\n{category.upper()} LOCATIONS:\n"
+                    # Sort locations by driving time
+                    sorted_locations = sorted(
+                        locations,
+                        key=lambda x: (
+                            x["modes"]["driving"]["current"]["value"] 
+                            if x["modes"]["driving"]["current"] 
+                            else float('inf')
+                        )
+                    )
+                    
+                    for location in sorted_locations:
+                        prompt += f"\n{location['destination']}"
+                        prompt += f"\nDistance: {location['distance']['text']}"
+                        
+                        # Add driving times
+                        driving = location["modes"]["driving"]
+                        transit = location["modes"]["transit"]
+                        
+                        prompt += "\nBy Car:"
+                        if driving["current"]:
+                            prompt += f"\n  Current: {driving['current']['text']}"
+                        if "morning_peak" in driving and driving["morning_peak"]:
+                            prompt += f"\n  Morning Peak (9am): {driving['morning_peak']['text']}"
+                        if "evening_peak" in driving and driving["evening_peak"]:
+                            prompt += f"\n  Evening Peak (5pm): {driving['evening_peak']['text']}"
+                        
+                        prompt += "\nBy Public Transport:"
+                        if transit["current"]:
+                            prompt += f"\n  Current: {transit['current']['text']}"
+                        if "morning_peak" in transit and transit["morning_peak"]:
+                            prompt += f"\n  Morning Peak (9am): {transit['morning_peak']['text']}"
+                        if "evening_peak" in transit and transit["evening_peak"]:
+                            prompt += f"\n  Evening Peak (5pm): {transit['evening_peak']['text']}"
+                        
+                        prompt += "\n" + "-"*30 + "\n"
+                
+                prompt += "\n" + "="*50 + "\n"
+
+            prompt += """
 
 Please provide a comprehensive analysis including:
 1. Overall Property Assessment
 2. Price Analysis (value for money, market comparison)
-3. Location and Property Features Analysis
-4. Potential Benefits and Drawbacks
-5. Investment Potential (if applicable)
-6. Recommendations for Different Buyer Types (e.g., families, investors, first-home buyers)
-7. Any Red Flags or Areas of Concern
+3. Location Analysis
+   - Commute times and accessibility (analyze the travel times provided above)
+   - Proximity to essential services
+   - Impact on daily life
+4. Property Features Analysis
+5. Potential Benefits and Drawbacks
+6. Investment Potential (if applicable)
+7. Recommendations for Different Buyer Types (e.g., families, investors, first-home buyers)
+8. Any Red Flags or Areas of Concern
 
 Please be specific, detailed, and provide actionable insights based on the provided information."""
 
