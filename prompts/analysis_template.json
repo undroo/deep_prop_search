@@ -1,0 +1,49 @@
+{
+  "executive_summary": {
+    "overview": "Brief overview of the property",
+    "highlights": ["Key highlight 1", "Key highlight 2"],
+    "concerns": ["Potential concern 1", "Potential concern 2"],
+    "recommendation": "Overall recommendation"
+  },
+  "property_analysis": {
+    "build_quality": "Build quality and condition assessment",
+    "layout": "Layout and functionality analysis",
+    "features": "Features and amenities evaluation",
+    "storage": "Storage and parking assessment",
+    "lighting": "Natural light and ventilation analysis",
+    "renovation": "Potential renovation opportunities"
+  },
+  "location_assessment": {
+    "neighborhood": "Neighborhood profile",
+    "transport": "Transport accessibility details",
+    "amenities": "Proximity to amenities analysis",
+    "development": "Future development potential",
+    "noise": "Noise and traffic considerations"
+  },
+  "market_analysis": {
+    "position": "Current market position",
+    "comparables": "Price comparison with similar properties",
+    "recent_sales": "Analysis of recent sales in the area",
+    "trends": "Market trends and forecasts",
+    "investment": "Investment potential analysis"
+  },
+  "buyer_recommendations": {
+    "suitable_buyers": ["Buyer type 1", "Buyer type 2"],
+    "negotiation_points": ["Point 1", "Point 2"],
+    "additional_costs": ["Cost 1", "Cost 2"],
+    "due_diligence": ["Task 1", "Task 2"]
+  },
+  "inspection_checklist": {
+    "key_areas": ["Area 1", "Area 2"],
+    "red_flags": ["Flag 1", "Flag 2"],
+    "agent_questions": ["Question 1", "Question 2"],
+    "required_documents": ["Document 1", "Document 2"]
+  },
+  "risk_assessment": {
+    "structural": ["Risk 1", "Risk 2"],
+    "legal": ["Risk 1", "Risk 2"],
+    "financial": ["Risk 1", "Risk 2"],
+    "environmental": ["Risk 1", "Risk 2"],
+    "maintenance": ["Risk 1", "Risk 2"]
+  }
+} 

@@ -47,6 +47,15 @@ st.markdown("""
     .transport-mode {
         margin-top: 1rem;
     }
+    .analysis-tab {
+        padding: 1rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .stTabs {
+        margin-top: 1rem;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -93,8 +102,10 @@ def display_property_details(property_data: dict) -> None:
         if features.get('land_size'):
             st.write(f"**Land Size:** {features['land_size']}m²")
     
-    st.subheader("Property Description")
-    st.write(property_data.get('description', 'No description available'))
+    # Add description in an expander
+    with st.expander("View Full Property Description", expanded=False):
+        st.write(property_data.get('description', 'No description available'))
+    
     print("✓ Property details displayed successfully")
 
 def display_location_analysis(distance_info: dict) -> None:
@@ -218,6 +229,108 @@ def _display_transport_modes(location: dict, cols: list, include_peak_times: boo
             else:
                 st.write("No walking route available")
 
+def display_ai_analysis(analysis: dict) -> None:
+    """
+    Display AI analysis in a tabbed interface.
+    
+    Args:
+        analysis: Dictionary containing AI analysis results
+    """
+    if not analysis or "error" in analysis:
+        st.error(analysis.get("error", "Error displaying analysis"))
+        return
+    
+    try:
+        # Parse the JSON string into a dictionary if it's a string
+        if isinstance(analysis["analysis"], str):
+            try:
+                # Clean the string and attempt to parse as JSON
+                cleaned_text = analysis["analysis"].strip()
+                if cleaned_text.startswith("{") and cleaned_text.endswith("}"):
+                    analysis_data = json.loads(cleaned_text)
+                else:
+                    st.warning("Analysis is not in JSON format. Displaying raw text.")
+                    st.write(cleaned_text)
+                    return
+            except json.JSONDecodeError as e:
+                st.error(f"Error parsing analysis JSON: {str(e)}")
+                st.write("Raw analysis text:")
+                st.write(analysis["analysis"])
+                return
+        else:
+            analysis_data = analysis["analysis"]
+        
+        # Define tab titles and their corresponding JSON keys
+        tabs_config = [
+            ("📋 Executive Summary", "executive_summary"),
+            ("🏠 Property Analysis", "property_analysis"),
+            ("📍 Location Assessment", "location_assessment"),
+            ("📈 Market Analysis", "market_analysis"),
+            ("👥 Buyer Guide", "buyer_recommendations"),
+            ("🔍 Inspection Guide", "inspection_checklist"),
+            ("⚠️ Risk Assessment", "risk_assessment")
+        ]
+        
+        # Create tabs
+        tab_titles = [config[0] for config in tabs_config]
+        tabs = st.tabs(tab_titles)
+        
+        # Display content in tabs
+        for tab, (tab_title, section_key) in zip(tabs, tabs_config):
+            with tab:
+                section_data = analysis_data.get(section_key)
+                if not section_data:
+                    st.info(f"No {section_key.replace('_', ' ')} available")
+                    continue
+                
+                # Display section content based on its structure
+                if section_key == "executive_summary":
+                    if isinstance(section_data, dict):
+                        st.write("### Overview")
+                        st.write(section_data.get("overview", "No overview available"))
+                        
+                        st.write("### Key Highlights")
+                        highlights = section_data.get("highlights", [])
+                        for highlight in highlights:
+                            st.write(f"• {highlight}")
+                        
+                        st.write("### Potential Concerns")
+                        concerns = section_data.get("concerns", [])
+                        for concern in concerns:
+                            st.write(f"• {concern}")
+                        
+                        st.write("### Recommendation")
+                        st.write(section_data.get("recommendation", "No recommendation available"))
+                    else:
+                        st.write(section_data)
+                
+                elif section_key in ["property_analysis", "location_assessment", "market_analysis"]:
+                    if isinstance(section_data, dict):
+                        for key, value in section_data.items():
+                            st.write(f"### {key.replace('_', ' ').title()}")
+                            st.write(value)
+                    else:
+                        st.write(section_data)
+                
+                elif section_key in ["buyer_recommendations", "inspection_checklist", "risk_assessment"]:
+                    if isinstance(section_data, dict):
+                        for key, items in section_data.items():
+                            st.write(f"### {key.replace('_', ' ').title()}")
+                            if isinstance(items, list):
+                                for item in items:
+                                    st.write(f"• {item}")
+                            else:
+                                st.write(items)
+                    else:
+                        st.write(section_data)
+                
+    except Exception as e:
+        st.error(f"Error displaying analysis: {str(e)}")
+        print(f"⚠ Error displaying analysis: {str(e)}")
+        if isinstance(analysis["analysis"], str):
+            st.write("Displaying raw analysis:")
+            st.write(analysis["analysis"])
+
 def main():
     """Main application entry point."""
     st.title("🏠 Domain Property Analyzer")
@@ -323,7 +436,7 @@ def main():
                             st.error(analysis["error"])
                             print(f"⚠ Error generating analysis: {analysis['error']}")
                         else:
-                            st.markdown(analysis["analysis"])
+                            display_ai_analysis(analysis)
                             print("✓ Detailed analysis generated")
                             
                             if save_results:

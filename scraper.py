@@ -11,6 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import os
 
 class DomainScraper:
     def __init__(self):
@@ -277,18 +278,23 @@ class DomainScraper:
 
     def save_results(self, results: Dict, filename: str):
         """
-        Save the scraped results to a JSON file.
+        Save scraping results to a JSON file in the outputs directory.
         
         Args:
-            results: Property data dictionary
-            filename: Name of the file to save results to
+            results: Dictionary containing scraping results
+            filename: Base filename to save results to
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{filename}_{timestamp}.json"
+        # Ensure outputs directory exists
+        os.makedirs("outputs", exist_ok=True)
+        output_file = f"outputs/{filename}_raw_{timestamp}.json"
         
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(results, f, indent=2, ensure_ascii=False)
-        print(f"Results saved to {filename}")
+        try:
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(results, f, indent=2, ensure_ascii=False)
+            print(f"✓ Raw data saved to {output_file}")
+        except Exception as e:
+            print(f"⚠ Error saving raw data: {e}")
 
 
 

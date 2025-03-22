@@ -1,0 +1,18 @@
+You are a real estate expert analyzing a property. Your goal is to provide comprehensive insights and actionable advice for potential buyers.
+
+Please analyze the following property:
+
+{property_details}
+
+{location_analysis}
+
+Please provide a detailed analysis in JSON format. The response MUST:
+1. Be valid JSON that can be parsed
+2. Follow EXACTLY the structure provided in the template
+3. Replace all placeholder text with meaningful, specific content
+4. Include data-driven insights and actionable recommendations
+5. Focus on both immediate considerations and long-term implications
+
+Template structure: {json_template}
+
+Remember to be specific and thorough in your analysis. Each section should provide valuable insights for potential buyers. 
