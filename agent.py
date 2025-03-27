@@ -13,6 +13,9 @@ from typing import Dict, Optional, List
 import os
 from datetime import datetime
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PropertyAgent:
     def __init__(self, api_key: str):
@@ -25,6 +28,7 @@ class PropertyAgent:
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-1.5-flash')
         self._load_prompts()
+        self.logger = logging.getLogger(__name__)
         print("✓ Property agent initialized with Gemini API")
     
     def _load_prompts(self) -> None:
@@ -80,13 +84,14 @@ class PropertyAgent:
             print(f"⚠ Error validating property data: {e}")
             return False
     
-    def analyze_property(self, property_data: Dict, distance_info: Optional[Dict] = None) -> Dict:
+    def analyze_property(self, property_data: Dict, distance_info: Optional[Dict] = None, persona_prompt: Optional[str] = None) -> Dict:
         """
         Analyze property data using Gemini AI and provide insights.
         
         Args:
             property_data: Dictionary containing property details
             distance_info: Optional dictionary containing distance calculations
+            persona_prompt: Optional persona perspective
             
         Returns:
             Dictionary containing analysis results
@@ -117,14 +122,43 @@ class PropertyAgent:
                 print(f"⚠ Error formatting property details: {str(e)}")
                 raise Exception(f"Failed to format property details: {str(e)}")
             
-            # Create analysis prompt with JSON template
+            # Create analysis prompt with persona if provided
             try:
-                prompt = self.analysis_prompt.format(
-                    property_details=property_details,
-                    location_analysis=location_analysis,
-                    json_template=self.json_template
-                )
-                print("✓ Generated analysis prompt with JSON template")
+                if persona_prompt:
+                    # Extract persona name and role from the prompt
+                    persona_lines = persona_prompt.split('\n')
+                    persona_name = persona_lines[0].replace('Name:', '').strip()
+                    persona_role = persona_lines[1].replace('Role:', '').strip()
+                    
+                    # Create persona-specific prompt
+                    prompt = f"""
+{persona_prompt}
+
+Please analyze this property from your perspective as {persona_name}, {persona_role}.
+
+Property Details:
+{property_details}
+
+{location_analysis}
+
+Provide a detailed analysis that reflects your personality and focuses on your key areas of interest.
+Format your response as a JSON object with these sections:
+1. Overview
+2. Key Strengths
+3. Key Concerns
+4. Investment Potential
+5. Final Recommendation
+
+Remember to maintain your unique perspective and focus on your key areas of interest.
+"""
+                else:
+                    # Use default analysis prompt
+                    prompt = self.analysis_prompt.format(
+                        property_details=property_details,
+                        location_analysis=location_analysis,
+                        json_template=self.json_template
+                    )
+                print("✓ Generated analysis prompt")
             except Exception as e:
                 print(f"⚠ Error creating analysis prompt: {str(e)}")
                 raise Exception(f"Failed to create analysis prompt: {str(e)}")
@@ -385,22 +419,31 @@ Description:
         
         print("================\n")
     
-    def save_analysis(self, analysis: Dict, filename: str) -> None:
-        """
-        Save the AI analysis results to a JSON file in the outputs directory.
+    # def save_analysis(self, analysis: Dict, analysis_type: str) -> str:
+    #     """
+    #     Save the AI analysis results to a JSON file in the outputs directory.
         
-        Args:
-            analysis: Dictionary containing analysis results
-            filename: Base filename to save results to
-        """
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Ensure outputs directory exists
-        os.makedirs("outputs", exist_ok=True)
-        output_file = f"outputs/{filename}_analysis_{timestamp}.json"
-        
-        try:
-            with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(analysis, f, indent=2, ensure_ascii=False)
-            print(f"✓ Analysis saved to {output_file}")
-        except Exception as e:
-            print(f"⚠ Error saving analysis: {e}") 
+    #     Args:
+    #         analysis: Dictionary containing analysis results
+    #         analysis_type: Type of analysis (e.g., 'property_analysis', 'quick_summary')
+            
+    #     Returns:
+    #         str: Path to saved analysis file
+    #     """
+    #     try:
+    #         # Create results directory if it doesn't exist
+    #         os.makedirs('results', exist_ok=True)
+            
+    #         # Generate filename with timestamp
+    #         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    #         filename = f'results/{analysis_type}_{timestamp}.json'
+            
+    #         # Save analysis to file
+    #         with open(filename, 'w') as f:
+    #             json.dump(analysis, f, indent=2)
+            
+    #         self.logger.info(f"Analysis saved to {filename}")
+    #         return filename
+    #     except Exception as e:
+    #         self.logger.error(f"Error saving analysis: {str(e)}")
+    #         raise 
