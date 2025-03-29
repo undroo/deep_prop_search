@@ -12,7 +12,7 @@ import requests
 from typing import Dict, List, Optional, Tuple
 import os
 from datetime import datetime, timedelta
-from locations import LOCATIONS
+from ..utils.locations import LOCATIONS
 
 class DistanceCalculator:
     # Constants for API endpoints

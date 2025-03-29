@@ -1,0 +1,18 @@
+Please analyze this property and provide a detailed assessment.
+
+Property Details:
+{property_data}
+
+{distance_info}
+
+Please provide a comprehensive analysis in the following JSON format:
+{json_template}
+
+Your analysis should include:
+1. Overview of the property and its key features
+2. Strengths and unique selling points
+3. Potential concerns or areas for improvement
+4. Investment potential and market considerations
+5. Final recommendation with supporting evidence
+
+Keep your analysis objective and data-driven, while highlighting both opportunities and risks. 

@@ -1,9 +1,34 @@
 {
-  "executive_summary": {
-    "overview": "Brief overview of the property",
-    "highlights": ["Key highlight 1", "Key highlight 2"],
-    "concerns": ["Potential concern 1", "Potential concern 2"],
-    "recommendation": "Overall recommendation"
+  "overview": {
+    "property_type": "",
+    "key_features": [],
+    "condition": "",
+    "unique_selling_points": []
+  },
+  "strengths": {
+    "physical_attributes": [],
+    "location_advantages": [],
+    "investment_potential": [],
+    "lifestyle_benefits": []
+  },
+  "concerns": {
+    "physical_issues": [],
+    "location_disadvantages": [],
+    "investment_risks": [],
+    "lifestyle_limitations": []
+  },
+  "investment_analysis": {
+    "price_assessment": "",
+    "market_position": "",
+    "growth_potential": "",
+    "rental_potential": "",
+    "holding_costs": []
+  },
+  "recommendation": {
+    "summary": "",
+    "suitable_buyer_types": [],
+    "key_considerations": [],
+    "next_steps": []
   },
   "property_analysis": {
     "build_quality": "Build quality and condition assessment",

@@ -127,4 +127,39 @@ Remember to:
 - Visit at different times of day
 - Check the neighborhood
 - Talk to neighbors if possible
-- Get professional inspections 
+- Get professional inspections
+
+Based on the property details and analysis, please provide a detailed inspection checklist.
+
+Your checklist should include:
+
+1. Exterior Inspection
+   - Roof condition and materials
+   - Foundation and structural integrity
+   - External walls and finishes
+   - Windows and doors
+   - Landscaping and drainage
+
+2. Interior Inspection
+   - Walls, ceilings, and floors
+   - Kitchen appliances and fixtures
+   - Bathroom fixtures and plumbing
+   - Electrical systems and lighting
+   - HVAC systems
+   - Storage spaces
+
+3. Safety and Compliance
+   - Smoke detectors and fire safety
+   - Security features
+   - Building code compliance
+   - Asbestos or lead paint concerns
+   - Pest infestation signs
+
+4. Additional Considerations
+   - Noise levels and privacy
+   - Natural lighting and ventilation
+   - Storage adequacy
+   - Future renovation potential
+   - Maintenance requirements
+
+For each item, provide specific things to look for and potential issues to be aware of. 

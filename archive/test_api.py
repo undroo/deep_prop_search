@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 # API configuration
 BASE_URL = "http://localhost:8000"
-TEST_URL = "https://www.domain.com.au/121-12-church-avenue-mascot-nsw-2020-2019876546"
+TEST_URL = "https://www.domain.com.au/1-henry-kendall-crescent-mascot-nsw-2020-2019711647"
 
 def save_test_results(results):
     """Save test results to a JSON file"""

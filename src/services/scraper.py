@@ -12,6 +12,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class DomainScraper:
     def __init__(self):
@@ -89,7 +92,6 @@ class DomainScraper:
                     "bedrooms": self._get_feature_value(soup, "Bed"),
                     "bathrooms": self._get_feature_value(soup, "Bath"),
                     "parking": self._get_feature_value(soup, "Parking"),
-                    # TODO: Add property size and land size scrapers, currently not working.
                     "property_size": self._clean_size(self._get_text(soup, '[data-testid="listing-details__floor-area"]')),
                     "land_size": self._clean_size(self._get_text(soup, '[data-testid="listing-details__land-area"]')),
                 },
@@ -99,7 +101,7 @@ class DomainScraper:
                     "agent_name": self._get_text(soup, '[data-testid="listing-details__agent-enquiry-agent-profile-link"]'),
                 },
                 "inspection_times": self._get_inspection_times(soup),
-                "images": self._get_images(soup),
+                "images": self._get_images(),  # Changed to use Selenium directly
             }
             
             # Try different price selectors
@@ -107,7 +109,7 @@ class DomainScraper:
                 '[data-testid="listing-details__summary-title"]',
                 '[data-testid="listing-details__price"]',
                 '[data-testid="listing-details__price-text"]',
-                '.listing-price',  # Add any other potential price selectors
+                '.listing-price',
             ]
 
             # Try each selector until we find a valid price
@@ -266,14 +268,97 @@ class DomainScraper:
             times.append(element.get_text(strip=True))
         return times
 
-    def _get_images(self, soup: BeautifulSoup) -> list:
-        """Extract property images."""
+    def _get_images(self) -> list:
+        """Extract property images using Selenium to handle dynamic loading."""
         images = []
-        img_elements = soup.select('img[data-testid="gallery-image"]')
-        for img in img_elements:
-            src = img.get('src')
-            if src:
-                images.append(src)
+        try:
+            logger.info("Starting image extraction process...")
+            wait = WebDriverWait(self.driver, 10)
+            
+            # Find and click the Photos button
+            logger.info("Looking for Photos button...")
+            photos_button = wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-testid="listing-details__toolbar-icon photos"]'))
+            )
+            logger.info("Found Photos button, clicking it...")
+            photos_button.click()
+            
+            # Wait for the gallery to load
+            logger.info("Waiting for gallery to initialize...")
+            time.sleep(2)  # Give time for the gallery to initialize
+            
+            # Find the next button for navigation using its title
+            logger.info("Looking for Next button...")
+            next_button = wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'button[title="Next (arrow right)"]'))
+            )
+            logger.info("Found Next button")
+            
+            # Keep track of seen images to avoid duplicates
+            seen_images = set()
+            image_count = 0
+            no_new_images_count = 0  # Track how many times we've seen no new images
+            
+            while True:
+                image_count += 1
+                logger.info(f"\nProcessing image #{image_count}")
+                
+                # Get all visible images and take the last one (rightmost)
+                logger.info("Looking for visible image elements...")
+                visible_images = self.driver.find_elements(By.CSS_SELECTOR, 'img[class="pswp__img"]')
+                if not visible_images:
+                    logger.info("No visible images found")
+                    break
+                    
+                # Get the last (rightmost) image
+                last_img = visible_images[-1]
+                src = last_img.get_attribute('src')
+                alt = last_img.get_attribute('alt')
+                logger.info(f"Processing last image - src: {src}, alt: {alt}")
+                
+                # Only add if we have a valid src and haven't seen it before
+                if src and src not in seen_images:
+                    images.append(src)
+                    seen_images.add(src)
+                    no_new_images_count = 0  # Reset counter when we find a new image
+                    logger.info(f"Added new image to collection. Total unique images: {len(images)}")
+                else:
+                    no_new_images_count += 1
+                    logger.info(f"No new image found. Consecutive no-new-images count: {no_new_images_count}")
+                
+                # If we haven't found any new images in 5 consecutive attempts, we're done
+                if no_new_images_count >= 5:
+                    logger.info("No new images found in 5 consecutive attempts - finished with gallery")
+                    break
+                
+                # Try to click next button
+                try:
+                    logger.info("Attempting to click Next button...")
+                    next_button.click()
+                    logger.info("Successfully clicked Next button")
+                    time.sleep(0.5)  # Wait for the next image to load
+                except Exception as e:
+                    logger.info(f"Could not click Next button: {str(e)}")
+                    logger.info("Reached end of gallery")
+                    break
+            
+            logger.info(f"\nImage extraction complete:")
+            logger.info(f"Total images processed: {image_count}")
+            logger.info(f"Total unique images found: {len(images)}")
+            
+            # Close the gallery modal
+            logger.info("Looking for close button...")
+            close_button = wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-testid="pswp-header-btn-close"]'))
+            )
+            logger.info("Found close button, clicking it...")
+            close_button.click()
+            logger.info("Gallery closed successfully")
+            
+        except Exception as e:
+            logger.error(f"Error in image extraction: {str(e)}")
+            logger.error("Full error details:", exc_info=True)
+        
         return images
 
     def save_results(self, results: Dict, filename: str):
