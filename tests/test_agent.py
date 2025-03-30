@@ -19,9 +19,9 @@ import pytest
 project_root = str(Path(__file__).parent.parent)
 sys.path.append(project_root)
 
-from src.agents.negative_nancy import NegativeNancy
-from src.services.scraper import DomainScraper
-from src.services.map import DistanceCalculator
+from backend.agents.negative_nancy import NegativeNancy
+from backend.services.scraper import DomainScraper
+from backend.services.map import DistanceCalculator
 
 # Configure logging
 logging.basicConfig(

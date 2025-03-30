@@ -14,7 +14,7 @@ import logging
 project_root = str(Path(__file__).parent.parent)
 sys.path.append(project_root)
 
-from src.services.scraper import DomainScraper
+from backend.services.scraper import DomainScraper
 
 # Configure logging
 logging.basicConfig(
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 load_dotenv(project_root + '/config/.env')
 
 # Test configuration
-TEST_PROPERTY_URL = "https://www.domain.com.au/1-henry-kendall-crescent-mascot-nsw-2020-2019711647"
+TEST_PROPERTY_URL = "https://www.domain.com.au/838-6-etherden-walk-mascot-nsw-2020-2019867596"
 TEST_RESULTS_DIR = Path(project_root) / "test_results"
 TEST_RUN_DIR = TEST_RESULTS_DIR / f"test_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 

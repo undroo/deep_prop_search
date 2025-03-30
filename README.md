@@ -15,7 +15,7 @@ An AI-powered property analysis API that provides comprehensive insights and rec
 
 ```
 deep_prop_search/
-├── src/
+├── backend/
 │   ├── api/
 │   │   ├── models.py      # Pydantic models for API
 │   │   └── routes.py      # API endpoints
@@ -66,7 +66,7 @@ cp .env.example .env
 ### Running the API
 
 ```bash
-uvicorn src.api.main:app --reload
+uvicorn backend.api.main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`

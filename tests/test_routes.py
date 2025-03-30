@@ -21,7 +21,7 @@ from fastapi import FastAPI
 project_root = str(Path(__file__).parent.parent)
 sys.path.append(project_root)
 
-from src.api.routes import router
+from backend.api.routes import router
 
 # Configure logging
 logging.basicConfig(

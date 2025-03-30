@@ -30,6 +30,9 @@ from ..services.scraper import DomainScraper
 from ..services.map import DistanceCalculator
 from ..agents.negative_nancy import NegativeNancy
 
+# TODO: Fix an issue where consecutive requests to the API are not being handled correctly.
+# Current hypothesis is that once initialized, the service manager is not being re-initialized or can't
+
 class ServiceManager:
     """
     Manages service instances for property analysis.
@@ -45,6 +48,7 @@ class ServiceManager:
     def scraper(self) -> DomainScraper:
         """Lazy initialization of DomainScraper."""
         if self._scraper is None:
+            logger.info("Initializing DomainScraper")
             self._scraper = DomainScraper()
         return self._scraper
 
@@ -52,6 +56,7 @@ class ServiceManager:
     def distance_calculator(self) -> DistanceCalculator:
         """Lazy initialization of DistanceCalculator."""
         if self._distance_calculator is None:
+            logger.info("Initializing DistanceCalculator")
             self._distance_calculator = DistanceCalculator(os.getenv("GOOGLE_MAP_API_KEY"))
         return self._distance_calculator
 
@@ -59,6 +64,7 @@ class ServiceManager:
     def negative_nancy(self) -> NegativeNancy:
         """Lazy initialization of NegativeNancy."""
         if self._negative_nancy is None:
+            logger.info("Initializing NegativeNancy")
             self._negative_nancy = NegativeNancy(os.getenv("GEMINI_API_KEY"))
         return self._negative_nancy
 
@@ -130,6 +136,7 @@ async def initialize_property(
     try:
         # Generate session ID (using timestamp for simplicity)
         session_id = str(datetime.now().timestamp())
+        logger.info(f"Starting property analysis for URL: {request.url}")
         
         # Initialize session
         analysis_sessions[session_id] = {
@@ -153,7 +160,9 @@ async def initialize_property(
             )
         
         # Scrape property data
+        logger.info(f"Starting property data scraping for session {session_id}")
         property_data = service_manager.scraper.get_property_data(request.url)
+        
         if not property_data:
             error_msg = "Failed to fetch property data. The URL may be invalid or the property listing may no longer exist."
             logger.warning(f"Failed to fetch property data for session {session_id}: {request.url}")
@@ -167,13 +176,17 @@ async def initialize_property(
                 error=error_msg
             )
         
+        logger.info(f"Successfully scraped property data for session {session_id}")
+        
         # Calculate distances if address is available
         distance_info = None
         if "address" in property_data and "full_address" in property_data["address"]:
+            logger.info(f"Calculating distances for session {session_id}")
             distance_info = service_manager.distance_calculator.calculate_distances(
                 property_data["address"]["full_address"],
                 request.categories
             )
+            logger.info(f"Successfully calculated distances for session {session_id}")
         
         # Update session with results
         analysis_sessions[session_id].update({
@@ -194,7 +207,7 @@ async def initialize_property(
         
     except Exception as e:
         error_msg = f"An unexpected error occurred: {str(e)}"
-        logger.error(f"Error initializing property analysis for session {session_id}: {str(e)}")
+        logger.error(f"Error initializing property analysis for session {session_id}: {str(e)}", exc_info=True)
         if session_id in analysis_sessions:
             analysis_sessions[session_id].update({
                 "status": "error",
