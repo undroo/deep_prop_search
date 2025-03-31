@@ -39,6 +39,16 @@ class DomainScraper:
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(options=chrome_options)
+        logger.info("Initialized WebDriver")
+
+    def __del__(self):
+        """Cleanup method to ensure WebDriver is closed when the scraper is destroyed."""
+        if hasattr(self, 'driver'):
+            try:
+                self.driver.quit()
+                logger.info("Closed WebDriver")
+            except Exception as e:
+                logger.error(f"Error closing WebDriver: {e}")
 
     def get_property_data(self, url: str) -> Optional[Dict]:
         """
@@ -124,11 +134,8 @@ class DomainScraper:
             return property_data
             
         except Exception as e:
-            print(f"Error scraping property data: {e}")
+            logger.error(f"Error scraping property data: {e}")
             return None
-        finally:
-            # Close the browser
-            self.driver.quit()
 
     def _get_text(self, soup: BeautifulSoup, selector: str) -> str:
         """Extract text from an element if it exists."""
@@ -136,7 +143,7 @@ class DomainScraper:
         if not element:
             return ""
         
-        return element.get_text(strip=True)
+        return element.get_text("\n",strip=True)
 
     def _get_property_type(self, soup: BeautifulSoup) -> str:
         """Extract property type using multiple possible selectors."""

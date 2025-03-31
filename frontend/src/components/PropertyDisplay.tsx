@@ -1,24 +1,68 @@
 import { PropertyData } from '../types/property';
 import Image from 'next/image';
+import { useState } from 'react';
 
 interface PropertyDisplayProps {
   property: PropertyData;
+  distanceInfo?: any;
 }
 
-export default function PropertyDisplay({ property }: PropertyDisplayProps) {
-  console.log('Property data received:', property);
+export default function PropertyDisplay({ property, distanceInfo }: PropertyDisplayProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(true);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const toggleDescription = () => {
+    setIsDescriptionExpanded(!isDescriptionExpanded);
+  };
+
+  const nextImage = () => {
+    setSelectedImageIndex((prev) => (prev + 1) % property.images.length);
+  };
+
+  const previousImage = () => {
+    setSelectedImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length);
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      {/* Property Images */}
+      {/* Image Gallery */}
       <div className="relative h-[400px] mb-6">
         {property.images.length > 0 && (
-          <Image
-            src={property.images[0]}
-            alt={`${property.address.full_address}`}
-            fill
-            className="object-cover rounded-lg"
-          />
+          <>
+            <Image
+              src={property.images[selectedImageIndex]}
+              alt={`${property.address.full_address}`}
+              fill
+              className="object-cover rounded-lg"
+            />
+            {property.images.length > 1 && (
+              <>
+                <button
+                  onClick={previousImage}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+                >
+                  ←
+                </button>
+                <button
+                  onClick={nextImage}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+                >
+                  →
+                </button>
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                  {property.images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`w-2 h-2 rounded-full ${
+                        index === selectedImageIndex ? 'bg-white' : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         )}
       </div>
 
@@ -55,11 +99,43 @@ export default function PropertyDisplay({ property }: PropertyDisplayProps) {
           )}
         </div>
 
+        {/* Distance Information Table */}
+        {distanceInfo && (
+          <div className="mt-6 border-t pt-4">
+            <h2 className="text-xl font-semibold mb-4">Distance Information</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {Object.entries(distanceInfo).map(([category, places]) => (
+                <div key={category} className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-gray-900 capitalize mb-2">{category}</h3>
+                  <ul className="space-y-1">
+                    {Array.isArray(places) && places.map((place, index) => (
+                      <li key={index} className="text-sm text-gray-600">
+                        {place.name}: {place.distance}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Collapsible Description */}
         <div className="pt-4 border-t">
-          <h2 className="text-xl font-semibold mb-2">Description</h2>
-          <p className="text-gray-600 whitespace-pre-line">
-            {property.description}
-          </p>
+          <button
+            onClick={toggleDescription}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h2 className="text-xl font-semibold">Description</h2>
+            <span className="text-gray-500">
+              {isDescriptionExpanded ? '▼' : '▶'}
+            </span>
+          </button>
+          {isDescriptionExpanded && (
+            <p className="mt-2 text-gray-600 whitespace-pre-line">
+              {property.description}
+            </p>
+          )}
         </div>
       </div>
     </div>

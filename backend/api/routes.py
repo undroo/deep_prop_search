@@ -4,7 +4,7 @@ This module provides endpoints for property analysis, distance calculations, and
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import os
 import logging
@@ -29,6 +29,7 @@ router = APIRouter(
 from ..services.scraper import DomainScraper
 from ..services.map import DistanceCalculator
 from ..agents.negative_nancy import NegativeNancy
+from ..agents.base_agent import BaseAgent
 
 # TODO: Fix an issue where consecutive requests to the API are not being handled correctly.
 # Current hypothesis is that once initialized, the service manager is not being re-initialized or can't
@@ -64,8 +65,19 @@ class ServiceManager:
     def negative_nancy(self) -> NegativeNancy:
         """Lazy initialization of NegativeNancy."""
         if self._negative_nancy is None:
-            logger.info("Initializing NegativeNancy")
-            self._negative_nancy = NegativeNancy(os.getenv("GEMINI_API_KEY"))
+            logger.info("Starting NegativeNancy initialization")
+            api_key = os.getenv("GEMINI_API_KEY")
+            logger.info(f"API Key present: {'Yes' if api_key else 'No'}")
+            if not api_key:
+                logger.error("GEMINI_API_KEY environment variable is not set")
+                raise ValueError("GEMINI_API_KEY environment variable is not set")
+            try:
+                logger.info("Creating NegativeNancy instance")
+                self._negative_nancy = NegativeNancy(api_key)
+                logger.info("NegativeNancy instance created successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize NegativeNancy: {str(e)}", exc_info=True)
+                raise
         return self._negative_nancy
 
 @lru_cache()
@@ -104,6 +116,36 @@ class PropertyInitializationResponse(BaseModel):
     property_data: Optional[Dict] = None
     distance_info: Optional[Dict] = None
     error: Optional[str] = None
+
+class AnalysisRequest(BaseModel):
+    """
+    Request model for property analysis.
+    
+    Attributes:
+        property_data (Dict): The property data to analyze
+        distance_info (Optional[Dict]): Distance calculations data
+        agent (str): The agent to use for analysis (e.g., "negative_nancy")
+        chat_history (Optional[List[Dict[str, Any]]]): Chat history for the analysis
+        current_question (Optional[str]): Current question for the analysis
+    """
+    property_data: Dict
+    distance_info: Optional[Dict] = None
+    agent: str
+    chat_history: Optional[List[Dict[str, Any]]] = None
+    current_question: Optional[str] = None
+
+class AnalysisResponse(BaseModel):
+    """
+    Response model for property analysis.
+    
+    Attributes:
+        analysis (Dict): The analysis data from the agent, containing structured information
+        timestamp (str): When the analysis was performed
+        agent (str): The agent used for the analysis
+    """
+    analysis: Dict
+    timestamp: str
+    agent: str
 
 # In-memory storage for analysis sessions (replace with database in production)
 analysis_sessions: Dict[str, Dict] = {}
@@ -219,6 +261,44 @@ async def initialize_property(
             status="error",
             error=error_msg
         )
+
+def get_agent(agent_name: str) -> Optional[BaseAgent]:
+    """Get the appropriate agent instance based on the agent name."""
+    service_manager = get_service_manager()
+    if agent_name == "negative_nancy":
+        return service_manager.negative_nancy
+    return None
+
+@router.post("/analyze", response_model=AnalysisResponse)
+async def analyze_property(request: AnalysisRequest):
+    """Analyze a property using the specified agent."""
+    try:
+        # Get the appropriate agent
+        agent = get_agent(request.agent)
+        if not agent:
+            raise HTTPException(status_code=400, detail=f"Unknown agent: {request.agent}")
+
+        # Perform the analysis
+        analysis_result = agent.analyze_property(
+            property_data=request.property_data,
+            distance_info=request.distance_info,
+            chat_history=request.chat_history,
+            current_question=request.current_question
+        )
+
+        # Add metadata
+        analysis_result['timestamp'] = datetime.now().isoformat()
+        analysis_result['agent'] = request.agent
+
+        return AnalysisResponse(
+            analysis=analysis_result,
+            timestamp=analysis_result['timestamp'],
+            agent=request.agent
+        )
+
+    except Exception as e:
+        logger.error(f"Error in analyze_property: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/")
 async def root():
