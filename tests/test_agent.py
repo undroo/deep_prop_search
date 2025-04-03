@@ -36,7 +36,7 @@ load_dotenv(project_root + '/config/.env')
 # Test configuration
 TEST_PROPERTY_URL = "https://www.domain.com.au/1-henry-kendall-crescent-mascot-nsw-2020-2019711647"
 TEST_RESULTS_DIR = Path(project_root) / "test_results"
-TEST_RUN_DIR = TEST_RESULTS_DIR / f"test_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+TEST_RUN_DIR = TEST_RESULTS_DIR / f"test_agent_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
 # Create test results directory
 TEST_RUN_DIR.mkdir(parents=True, exist_ok=True)

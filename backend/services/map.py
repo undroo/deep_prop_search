@@ -9,10 +9,11 @@ This module provides functionality to:
 """
 
 import requests
+import json
 from typing import Dict, List, Optional, Tuple
 import os
 from datetime import datetime, timedelta
-from ..utils.locations import LOCATIONS
+from pathlib import Path
 
 class DistanceCalculator:
     # Constants for API endpoints
@@ -34,6 +35,12 @@ class DistanceCalculator:
         self.api_key = api_key
         self.base_url = self.ROUTES_API_ENDPOINT
         self.places_url = self.PLACES_API_ENDPOINT
+        
+        # Load locations from JSON
+        locations_path = Path(__file__).parent.parent / "utils" / "locations.json"
+        with open(locations_path, 'r') as f:
+            self.locations = json.load(f)
+        
         print("✓ Google Maps Routes client initialized successfully")
     
     def _get_suburb_from_address(self, address: str) -> str:
@@ -80,7 +87,7 @@ class DistanceCalculator:
         grocery_locations = []
         seen_addresses = set()  # Track unique addresses to avoid duplicates
         
-        for store in LOCATIONS["groceries"]:
+        for store in self.locations["groceries"]:
             search_query = f"{store} {suburb}, NSW"
             print(f"\nSearching for: {search_query}")
             
@@ -257,7 +264,7 @@ class DistanceCalculator:
         print(f"\nCalculating distances from: {property_address}")
         
         if not categories:
-            categories = LOCATIONS.keys()
+            categories = self.locations.keys()
         
         results = {}
         
@@ -278,7 +285,7 @@ class DistanceCalculator:
                 # For groceries, use the formatted_address from Places API
                 destinations = [loc["formatted_address"] for loc in locations]
             else:
-                locations = LOCATIONS.get(category, [])
+                locations = self.locations.get(category, [])
                 print(f"Processing {len(locations)} {category} locations")
                 destinations = locations
             

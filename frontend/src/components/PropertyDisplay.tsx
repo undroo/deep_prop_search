@@ -4,10 +4,9 @@ import { useState } from 'react';
 
 interface PropertyDisplayProps {
   property: PropertyData;
-  distanceInfo?: any;
 }
 
-export default function PropertyDisplay({ property, distanceInfo }: PropertyDisplayProps) {
+export default function PropertyDisplay({ property }: PropertyDisplayProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -98,27 +97,6 @@ export default function PropertyDisplay({ property, distanceInfo }: PropertyDisp
             </div>
           )}
         </div>
-
-        {/* Distance Information Table */}
-        {distanceInfo && (
-          <div className="mt-6 border-t pt-4">
-            <h2 className="text-xl font-semibold mb-4">Distance Information</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {Object.entries(distanceInfo).map(([category, places]) => (
-                <div key={category} className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-900 capitalize mb-2">{category}</h3>
-                  <ul className="space-y-1">
-                    {Array.isArray(places) && places.map((place, index) => (
-                      <li key={index} className="text-sm text-gray-600">
-                        {place.name}: {place.distance}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Collapsible Description */}
         <div className="pt-4 border-t">

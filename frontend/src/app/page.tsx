@@ -4,6 +4,7 @@ import { useState } from 'react';
 import PropertyForm from '../components/PropertyForm';
 import PropertyDisplay from '../components/PropertyDisplay';
 import ChatAnalysis from '../components/ChatAnalysis';
+import DistanceInfoDisplay from '../components/DistanceInfoDisplay';
 import { PropertyResponse, PropertyFormData } from '../types/property';
 import { initializeProperty } from '../utils/api';
 
@@ -11,7 +12,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [propertyData, setPropertyData] = useState<PropertyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'property' | 'chat'>('property');
+  const [activeTab, setActiveTab] = useState<'property' | 'chat' | 'distance'>('property');
 
   const handleSubmit = async (data: PropertyFormData) => {
     setIsLoading(true);
@@ -72,6 +73,16 @@ export default function Home() {
                   Property Details
                 </button>
                 <button
+                  onClick={() => setActiveTab('distance')}
+                  className={`px-6 py-4 text-sm font-medium ${
+                    activeTab === 'distance'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Location Information
+                </button>
+                <button
                   onClick={() => setActiveTab('chat')}
                   className={`px-6 py-4 text-sm font-medium ${
                     activeTab === 'chat'
@@ -86,9 +97,15 @@ export default function Home() {
 
             {/* Tab Content */}
             <div className="p-6">
-              {activeTab === 'property' ? (
+              {activeTab === 'property' && (
                 <PropertyDisplay property={propertyData.property_data} />
-              ) : (
+              )}
+              {activeTab === 'distance' && propertyData.distance_info && (
+                <div className="max-w-4xl mx-auto">
+                  <DistanceInfoDisplay distanceInfo={propertyData.distance_info} />
+                </div>
+              )}
+              {activeTab === 'chat' && (
                 <ChatAnalysis 
                   property={propertyData.property_data} 
                   distanceInfo={propertyData.distance_info}
