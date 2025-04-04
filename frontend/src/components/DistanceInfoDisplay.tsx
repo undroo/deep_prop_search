@@ -1,11 +1,8 @@
 import React from 'react';
-import { DistanceInfo, LocationDistance } from '../types/property';
+import { LocationDistance } from '../types/property';
 import { FaCar, FaBus, FaWalking, FaBuilding, FaShoppingCart, FaSchool, FaTrain, FaBicycle } from 'react-icons/fa';
 import { textStyles } from '../styles/textStyles';
-
-interface DistanceInfoDisplayProps {
-    distanceInfo: DistanceInfo;
-}
+import { useTabs } from '../context/TabsContext';
 
 const formatTime = (time?: { text: string; value: number }) => {
     if (!time) return 'N/A';
@@ -51,7 +48,11 @@ const LocationRow: React.FC<{ location: LocationDistance }> = ({ location }) => 
     );
 };
 
-const DistanceInfoDisplay: React.FC<DistanceInfoDisplayProps> = ({ distanceInfo }) => {
+export default function DistanceInfoDisplay() {
+    const { distanceInfo } = useTabs();
+
+    if (!distanceInfo) return null;
+
     return (
         <div className={textStyles.layout.container}>
             {distanceInfo.work && distanceInfo.work.length > 0 && (
@@ -136,6 +137,4 @@ const DistanceInfoDisplay: React.FC<DistanceInfoDisplayProps> = ({ distanceInfo 
             )}
         </div>
     );
-};
-
-export default DistanceInfoDisplay; 
+} 

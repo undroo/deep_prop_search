@@ -16,7 +16,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, distanceInf
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <p className="text-sm text-gray-600">Price</p>
-                        <p className="text-xl font-semibold">${property.basic_info.price.toLocaleString()}</p>
+                        <p className="text-xl font-semibold">${property.basic_info.price}</p>
                     </div>
                     <div>
                         <p className="text-sm text-gray-600">Property Type</p>
@@ -53,7 +53,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, distanceInf
             {distanceInfo && (
                 <div className="bg-white rounded-lg shadow p-6">
                     <h2 className="text-xl font-bold mb-4">Location Information</h2>
-                    <DistanceInfoDisplay distanceInfo={distanceInfo} />
+                    <DistanceInfoDisplay />
                 </div>
             )}
         </div>
